@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/mark3labs/mcp-go/server"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -443,6 +444,7 @@ type mockClientSession struct {
 	id            string
 	notifChannel  chan mcp.JSONRPCNotification
 	isInitialized bool
+	sessionTools  map[string]server.ServerTool
 }
 
 func (m *mockClientSession) SessionID() string {
@@ -462,4 +464,12 @@ func (m *mockClientSession) Initialize() {
 
 func (m *mockClientSession) Initialized() bool {
 	return m.isInitialized
+}
+
+func (m *mockClientSession) GetSessionTools() map[string]server.ServerTool {
+	return m.sessionTools
+}
+
+func (m *mockClientSession) SetSessionTools(tools map[string]server.ServerTool) {
+	m.sessionTools = tools
 }

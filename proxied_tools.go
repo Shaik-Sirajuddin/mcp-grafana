@@ -376,7 +376,6 @@ func (tm *ToolManager) InitializeAndRegisterProxiedTools(ctx context.Context, se
 	// Step 2: Register tools with the MCP server
 	state.mutex.Lock()
 	defer state.mutex.Unlock()
-
 	// Check if tools already registered
 	if len(state.proxiedTools) > 0 {
 		return
@@ -419,7 +418,6 @@ func (tm *ToolManager) InitializeAndRegisterProxiedTools(ctx context.Context, se
 		})
 		state.proxiedTools = append(state.proxiedTools, tool)
 	}
-
 	if err := tm.server.AddSessionTools(sessionID, serverTools...); err != nil {
 		slog.Warn("failed to add session tools", "session", sessionID, "error", err)
 	} else {
