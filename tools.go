@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"reflect"
 
+	"github.com/grafana/mcp-grafana/pkg/auth/rbac"
 	"github.com/invopop/jsonschema"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
@@ -26,6 +27,18 @@ import (
 type Tool struct {
 	Tool    mcp.Tool
 	Handler server.ToolHandlerFunc
+	//Meta defines data model for internal usage by mcp server
+	Meta ToolMeta
+}
+
+type ToolMeta struct {
+	ReqPermissions []rbac.Permission
+}
+
+func NewMetaWithPermissions(permissions []rbac.Permission) ToolMeta {
+	return ToolMeta{
+		ReqPermissions: permissions,
+	}
 }
 
 // HardError wraps an error to indicate it should propagate as a JSON-RPC protocol
@@ -64,6 +77,19 @@ func MustTool[T any, R any](
 		panic(err)
 	}
 	return Tool{Tool: tool, Handler: handler}
+}
+
+// MustTool creates a new Tool from the given name, description, meta and toolHandler.
+// It accepts meta parameter allowing to define required permissions
+// It panics if the tool cannot be created, making it suitable for compile-time tool definitions where creation errors indicate programming mistakes.
+func MustToolV2[T any, R any](
+	name, description string, meta ToolMeta,
+	toolHandler ToolHandlerFunc[T, R],
+	options ...mcp.ToolOption,
+) Tool {
+	tool := MustTool(name, description, toolHandler, options...)
+	tool.Meta = meta
+	return tool
 }
 
 // ToolHandlerFunc is the type of a handler function for a tool.

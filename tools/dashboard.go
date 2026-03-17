@@ -17,6 +17,7 @@ import (
 
 	"github.com/grafana/grafana-openapi-client-go/models"
 	mcpgrafana "github.com/grafana/mcp-grafana"
+	"github.com/grafana/mcp-grafana/pkg/auth/rbac"
 )
 
 type GetDashboardByUIDParams struct {
@@ -249,9 +250,13 @@ var GetDashboardByUID = mcpgrafana.MustTool(
 	mcp.WithReadOnlyHintAnnotation(true),
 )
 
-var UpdateDashboard = mcpgrafana.MustTool(
+var UpdateDashboard = mcpgrafana.MustToolV2(
 	"update_dashboard",
 	"Create or update a dashboard. Two modes: (1) Full JSON — provide 'dashboard' for new dashboards or complete replacements. (2) Patch — provide 'uid' + 'operations' to make targeted changes to an existing dashboard. One of these two modes is required; 'folderUid'\\, 'message'\\, and 'overwrite' are supplementary and do nothing on their own. Patch operations support JSONPaths like '$.panels[0].targets[0].expr'\\, '$.panels[1].title'\\, '$.panels[2].targets[0].datasource'. Append to arrays with '/- ' syntax: '$.panels/- '. Remove by index: {\"op\": \"remove\"\\, \"path\": \"$.panels[2]\"}. Multiple removes on the same array are automatically reordered to avoid index-shifting issues.",
+	mcpgrafana.NewMetaWithPermissions([]rbac.Permission{
+		rbac.NewPermissionFromAction("dashboard:write"),
+		rbac.NewPermissionFromAction("dashboard:create"),
+	}),
 	updateDashboard,
 	mcp.WithTitleAnnotation("Create or update dashboard"),
 	mcp.WithDestructiveHintAnnotation(true),
@@ -746,6 +751,25 @@ func extractVariableSummary(variable map[string]interface{}) VariableSummary {
 		Label: safeString(variable, "label"),
 	}
 }
+
+var RequiredPermissions = []string{
+	"dashboards:create",
+	"dashboards:delete",
+	"dashboards:write",
+}
+
+var RequiredReadPermissions = []string{
+	"dashboards:read",
+	"dashboards.public:write",
+}
+
+//TODO : missing docs for update permissions in grafana http api
+//- indicator , insights api likely returns response from getdashboardbyuid 
+// ?
+// after discover tools  when enabled permission based tool registration
+// 1.Fetch user permissions during tool registration 
+// 2.Filter out any tools that do not have a permissions 
+// 
 
 func AddDashboardTools(mcp *server.MCPServer, enableWriteTools bool) {
 	GetDashboardByUID.Register(mcp)
